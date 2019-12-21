@@ -28,7 +28,7 @@ class RRTPlanner(object):
         self.goal_sample_rate = goal_sample_rate
         
 
-    def Plan(self, start_config, goal_config, step_size = 10, k = None):
+    def Plan(self, start_config, goal_config, step_size = 10, k = None, max_iter = 1000):
         
         plan = []
         start_node = Node(*start_config)
@@ -37,7 +37,7 @@ class RRTPlanner(object):
         # Start with adding the start configuration to the tree.
         start_idx = self.tree.AddVertex(start_node)
         i = 0
-        while True:
+        while i < max_iter:
             rnd_node = self.get_random_node()
             nearest_node_idx, nearest_node = self.tree.GetNearestVertex(rnd_node)
             new_node = self.extend(nearest_node, rnd_node, step_size)
