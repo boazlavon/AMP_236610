@@ -14,10 +14,11 @@ class MapEnvironment(object):
 
         # Check if start and goal are within limits and collision free
         if not self.state_validity_checker(start) or not self.state_validity_checker(goal):
-            raise ValueError('Start and Goal state must be within the map limits');
+            raise ValueError('Start and Goal state must be within the map limits - x:{} y:{}'.format(self.xlimit, self.ylimit));
             exit(0)
         self.start = start
         self.goal = goal
+        self.obstacles = self._get_obstacles()
         # Display the map
         plt.imshow(self.map, interpolation='nearest')
 
@@ -27,7 +28,7 @@ class MapEnvironment(object):
         # TODO: Implement a function which computes the distance between
         # two configurations.
         #
-        return numpy.linalg.norm(start_config - end_config)
+        return numpy.linalg.norm(numpy.array(start_config) - numpy.array(end_config))
 
 
     def state_validity_checker(self, config):
@@ -57,6 +58,11 @@ class MapEnvironment(object):
         #
         return self.compute_distance(config,self.goal)
 
+    def _get_obstacles(self):
+        result = numpy.where(self.map == 1)
+        obstacles = list(zip(result[0], result[1]))
+        return obstacles
+
     def visualize_plan(self, plan):
         '''
         Visualize the final path
@@ -66,5 +72,7 @@ class MapEnvironment(object):
         for i in range(numpy.shape(plan)[0] - 1):
             x = [plan[i,0], plan[i+1, 0]]
             y = [plan[i,1], plan[i+1, 1]]
-            plt.plot(y, x, 'k')
+            plt.plot(y, x, 'g')
         plt.show()
+        filename = str(int(time.time()))
+        plt.savefig('{}.png'.format(filename))

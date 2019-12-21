@@ -21,8 +21,10 @@ class RRTTree(object):
         @param config Sampled configuration.
         '''
         dists = []
+        config = (config.x, config.y)
         for v in self.vertices:
-            dists.append(self.planning_env.ComputeDistance(config, v))
+            v = (v.x, v.y)
+            dists.append(self.planning_env.compute_distance(config, v))
 
         vid, vdist = min(enumerate(dists), key=operator.itemgetter(1))
 
@@ -35,8 +37,10 @@ class RRTTree(object):
         @param k Number of nearest neighbors to retrieve.
         '''
         dists = []
+        config = (config.x, config.y)
         for v in self.vertices:
-            dists.append(self.planning_env.ComputeDistance(config, v))
+            v = (v.x, v.y)
+            dists.append(self.planning_env.compute_distance(config, v))
 
         dists = numpy.array(dists)
         knnIDs = numpy.argpartition(dists, k)
