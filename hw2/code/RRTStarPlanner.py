@@ -1,30 +1,12 @@
 import numpy
 from RRTTree import RRTTree
+from RRTPlanner import RRTPlanner
 
-class RRTStarPlanner(object):
+class RRTStarPlanner(RRTPlanner):
 
-    def __init__(self, planning_env):
-        self.planning_env = planning_env
-        self.tree = RRTTree(self.planning_env)
-        
+    def __init__(self, planning_env, k=4, goal_sample_rate=0.2):
+            super().__init__(planning_env, goal_sample_rate)
+            self.k = k
 
-    def Plan(self, start_config, goal_config, epsilon = 0.001):
-        
-        # Initialize an empty plan.
-        plan = []
-
-        # Start with adding the start configuration to the tree.
-        self.tree.AddVertex(start_config)
-
-        # TODO (student): Implement your planner here.
-        plan.append(start_config)
-        plan.append(goal_config)
-        return numpy.array(plan)
-
-    def extend(self):
-        # TODO (student): Implement an extend logic.
-        pass
-
-    def ShortenPath(self, path):
-        # TODO (student): Postprocessing of the plan.
-        return path
+    def Plan(self, start_config, goal_config, sample_dist = 5, max_iter = 1000):
+        return super().Plan(start_config, goal_config, sample_dist = sample_dist, k = self.k, max_iter = max_iter)

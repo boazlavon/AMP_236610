@@ -11,7 +11,8 @@ class Node(object):
         def __init__(self, x, y):
             self.x = x
             self.y = y
-            self.d = 0
+            self.cost = 0
+            self.parent = None
 
         def __repr__(self):
             return str((self.x, self.y))
@@ -23,7 +24,7 @@ class RRTPlanner(object):
         self.planning_env = planning_env
         self.tree = RRTTree(self.planning_env)
         self.goal_sample_rate = goal_sample_rate
-        
+
 
     def Plan(self, start_config, goal_config, sample_dist = 10, k = None, max_iter = 1000):
         
@@ -35,7 +36,6 @@ class RRTPlanner(object):
         start_idx = self.tree.AddVertex(start_node)
         i = 0
         while i < max_iter:
-            i += 1
             rnd_node = self.get_random_node()
             nearest_node_idx, nearest_node = self.tree.GetNearestVertex(rnd_node)
             new_node = self.extend(nearest_node, rnd_node, sample_dist)
@@ -45,14 +45,16 @@ class RRTPlanner(object):
             if self.planning_env.edge_validity_checker(nearest_node, new_node):
                 new_node_idx = self.tree.AddVertex(new_node)
                 self.tree.AddEdge(nearest_node_idx, new_node_idx)
+                new_node.parent = nearest_node
 
                 if k is not None:
                     self.rewire(new_node, new_node_idx, k)
 
             print(i)
-            if (i % 3) == 1:
+            if (i % 3) == 0:
                 self.draw_graph(new_node)
-            
+            i += 1
+
             last_node = self.tree.vertices[-1]
             last_node_idx = len(self.tree.vertices) - 1
             goal_dist, _ = self.calc_distance_and_angle(last_node, goal_node)
@@ -61,12 +63,13 @@ class RRTPlanner(object):
                 if self.planning_env.edge_validity_checker(last_node, goal_node):
                     goal_idx = self.tree.AddVertex(goal_node)
                     self.tree.AddEdge(last_node_idx, goal_idx)
+                    goal_node.cost = last_node.cost + goal_dist
                     plan = self.extract_plan(start_idx, goal_idx)
                     self.draw_graph()
                     break
 
         # TODO (student): Implement  your planner here.
-        return np.array(plan)
+        return plan
 
 
     def rewire(self, x_child, x_child_idx, k):
@@ -79,19 +82,35 @@ class RRTPlanner(object):
 
             if self.planning_env.edge_validity_checker(x_pparent, x_child):
                 R, _ = self.calc_distance_and_angle(x_pparent, x_child)
-                if (x_pparent.d + R < x_child.d): # rewire
+                if (x_pparent.cost + R < x_child.cost): # rewire
                     self.tree.AddEdge(pparent_id, x_child_idx)
-                    x_child_idx = x_pparent.d + R
+                    x_child.cost = x_pparent.cost + R
+                    x_child.parent = x_pparent
+                    self.propagate_cost_to_leaves(x_child)
+
+        for pparent_id, x_pparent in zip(knnIDs, k_nodes):
+            if pparent_id == x_child_idx:
+                continue
+
+            if self.planning_env.edge_validity_checker(x_child, x_pparent):
+                R, _ = self.calc_distance_and_angle(x_child, x_pparent)
+                if (x_child.cost + R < x_pparent.cost): # rewire
+                    self.tree.AddEdge(x_child_idx, pparent_id)
+                    x_pparent.cost = x_child.cost + R
+                    x_pparent.parent = x_child
+                    self.propagate_cost_to_leaves(x_pparent)
+
 
     def extract_plan(self, start_idx, goal_idx):
         plan = []
         iter_node = self.tree.vertices[goal_idx]
-        plan.append((iter_node.x, iter_node.y))
         iter_idx = goal_idx
+        plan.append((iter_idx, iter_node))
+
         while True:
             iter_idx = self.tree.edges[iter_idx]
             iter_node = self.tree.vertices[iter_idx]
-            plan.append((iter_node.x, iter_node.y))
+            plan.append((iter_idx, iter_node))
             if start_idx == iter_idx:
                 break
         plan = plan[::-1]
@@ -106,7 +125,7 @@ class RRTPlanner(object):
         else:
             new_node = to_node
         
-        new_node.d = R + from_node.d
+        new_node.cost = R + from_node.cost
         return new_node
 
 
@@ -117,6 +136,13 @@ class RRTPlanner(object):
         else:  # goal point sampling
             rnd = Node(*self.planning_env.goal)
         return rnd
+
+    def propagate_cost_to_leaves(self, parent_node):
+        for node in self.tree.vertices:
+            if node.parent == parent_node:
+                R, _ = self.calc_distance_and_angle(node, parent_node)
+                node.cost = parent_node.cost + R
+                self.propagate_cost_to_leaves(node)
 
 
     @staticmethod
@@ -146,4 +172,29 @@ class RRTPlanner(object):
 
     def ShortenPath(self, path):
         # TODO (student): Postprocessing of the plan.
-        return path
+        start = 0
+        while start < len(path):
+            start_idx, start_node = path[start]
+            end = len(path) - 1
+            while start < end:
+                end_idx, end_node = path[end]
+                if not self.planning_env.edge_validity_checker(start_node, end_node):
+                    end -= 1
+                    continue
+
+                R, _ = self.calc_distance_and_angle(start_node, end_node)
+                if (start_node.cost + R < end_node.cost): # rewire
+                    self.tree.AddEdge(start_idx, end_idx)
+                    end_node.cost   = start_node.cost + R
+                    end_node.parent = start_node
+                    self.propagate_cost_to_leaves(end_node)
+                    start = end - 1
+                    break
+                else:
+                    end -= 1
+            start += 1
+
+        start_idx, _ = path[0]
+        goal_idx,  _ = path[-1]
+        plan = self.extract_plan(start_idx, goal_idx)
+        return plan

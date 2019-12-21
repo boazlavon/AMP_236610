@@ -17,19 +17,20 @@ def main(planning_env, planner, start, goal, planner_name):
     # Plan.
     start_time = time.time()
     plan = planner.Plan(start, goal)
-    end_time   = time.time()
 
     # Shortcut the path.
     # TODO (student): Do not shortcut when comparing the performance of algorithms. 
     # Comment this line out when collecting data over performance metrics.
     plan_short = planner.ShortenPath(plan)
+    end_time   = time.time()
 
     # Visualize the final path.
-    cost  = planning_env.calc_plan_cost(plan)
+    plan_short = [(node.x, node.y) for _, node in plan_short]
+    cost  = planning_env.calc_plan_cost(plan_short)
     exec_time = time.strftime('%M:%S', time.gmtime(end_time - start_time))
     title =  'planner: {}, cost: {}, exec_time: {}'.format(planner_name, cost, exec_time)
     filename = '{}_{}_{}_{}'.format(planner_name, int(cost), int(end_time - start_time), int(time.time()))
-    planning_env.visualize_plan(plan, filename=filename, title=title)
+    planning_env.visualize_plan(plan_short, filename=filename, title=title)
     embed()
 
 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         planner = AStarPlanner(planning_env)
     elif args.planner == 'rrt':
         planner = RRTPlanner(planning_env)
-    elif args.planner == 'rrtconnect':
+    elif args.planner == 'rrtstar':
         planner = RRTStarPlanner(planning_env)
     else:
         print('Unknown planner option: %s' % args.planner)
