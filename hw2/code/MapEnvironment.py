@@ -16,7 +16,8 @@ class MapEnvironment(object):
         if not self.state_validity_checker(start) or not self.state_validity_checker(goal):
             raise ValueError('Start and Goal state must be within the map limits');
             exit(0)
-
+        self.start = start
+        self.goal = goal
         # Display the map
         plt.imshow(self.map, interpolation='nearest')
 
@@ -26,7 +27,7 @@ class MapEnvironment(object):
         # TODO: Implement a function which computes the distance between
         # two configurations.
         #
-        pass
+        return numpy.linalg.norm(start_config - end_config)
 
 
     def state_validity_checker(self, config):
@@ -35,6 +36,10 @@ class MapEnvironment(object):
         # TODO: Implement a state validity checker
         # Return true if valid.
         #
+        if not (self.xlimit[0] <= config[0] < self.xlimit[1] and self.ylimit[0] <= config[1] < self.ylimit[1]):
+            return False
+        if self.map[config[0],config[1]] == 1:
+            return False
         return True
 
     def edge_validity_checker(self, config1, config2):
@@ -50,7 +55,7 @@ class MapEnvironment(object):
         #
         # TODO: Implement a function to compute heuristic.
         #
-        pass
+        return self.compute_distance(config,self.goal)
 
     def visualize_plan(self, plan):
         '''
