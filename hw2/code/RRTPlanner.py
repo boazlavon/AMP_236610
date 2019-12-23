@@ -8,10 +8,10 @@ class Node(object):
         """
         RRT Node
         """
-        def __init__(self, x, y):
+        def __init__(self, x, y, cost=0):
             self.x = x
             self.y = y
-            self.cost = 0
+            self.cost = cost
             self.parent = None
 
         def __repr__(self):
@@ -20,13 +20,14 @@ class Node(object):
 
 class RRTPlanner(object):
 
-    def __init__(self, planning_env, goal_sample_rate=0.2):
+    def __init__(self, planning_env, goal_sample_rate=0.2, sample_dist = 10):
         self.planning_env = planning_env
         self.tree = RRTTree(self.planning_env)
         self.goal_sample_rate = goal_sample_rate
+        self.sample_dist = sample_dist
 
 
-    def Plan(self, start_config, goal_config, sample_dist = 10, k = None, max_iter = 1000):
+    def Plan(self, start_config, goal_config, max_iter = 1000):
         
         plan = []
         start_node = Node(*start_config)
@@ -38,7 +39,7 @@ class RRTPlanner(object):
         while i < max_iter:
             rnd_node = self.get_random_node()
             nearest_node_idx, nearest_node = self.tree.GetNearestVertex(rnd_node)
-            new_node = self.extend(nearest_node, rnd_node, sample_dist)
+            new_node = self.extend(nearest_node, rnd_node)
             if not self.planning_env.state_validity_checker((new_node.x, new_node.y), check_obst=False):
                 continue
 
@@ -46,9 +47,6 @@ class RRTPlanner(object):
                 new_node_idx = self.tree.AddVertex(new_node)
                 self.tree.AddEdge(nearest_node_idx, new_node_idx)
                 new_node.parent = nearest_node
-
-                if k is not None:
-                    self.rewire(new_node, new_node_idx, k)
 
             print(i)
             if (i % 3) == 0:
@@ -59,7 +57,7 @@ class RRTPlanner(object):
             last_node_idx = len(self.tree.vertices) - 1
             goal_dist, _ = self.calc_distance_and_angle(last_node, goal_node)
 
-            if goal_dist <= sample_dist:
+            if goal_dist <= self.sample_dist:
                 if self.planning_env.edge_validity_checker(last_node, goal_node):
                     goal_idx = self.tree.AddVertex(goal_node)
                     self.tree.AddEdge(last_node_idx, goal_idx)
@@ -70,36 +68,6 @@ class RRTPlanner(object):
 
         # TODO (student): Implement  your planner here.
         return plan
-
-
-    def rewire(self, x_child, x_child_idx, k):
-        
-        k = min(k, len(self.tree.vertices) - 1)
-        knnIDs, k_nodes = self.tree.GetKNN(x_child, k)
-        for pparent_id, x_pparent in zip(knnIDs, k_nodes):
-            if pparent_id == x_child_idx:
-                continue
-
-            if self.planning_env.edge_validity_checker(x_pparent, x_child):
-                R, _ = self.calc_distance_and_angle(x_pparent, x_child)
-                if (x_pparent.cost + R < x_child.cost): # rewire
-                    self.tree.AddEdge(pparent_id, x_child_idx)
-                    x_child.cost = x_pparent.cost + R
-                    x_child.parent = x_pparent
-                    self.propagate_cost_to_leaves(x_child)
-
-        for pparent_id, x_pparent in zip(knnIDs, k_nodes):
-            if pparent_id == x_child_idx:
-                continue
-
-            if self.planning_env.edge_validity_checker(x_child, x_pparent):
-                R, _ = self.calc_distance_and_angle(x_child, x_pparent)
-                if (x_child.cost + R < x_pparent.cost): # rewire
-                    self.tree.AddEdge(x_child_idx, pparent_id)
-                    x_pparent.cost = x_child.cost + R
-                    x_pparent.parent = x_child
-                    self.propagate_cost_to_leaves(x_pparent)
-
 
     def extract_plan(self, start_idx, goal_idx):
         plan = []
@@ -117,13 +85,13 @@ class RRTPlanner(object):
         return plan
 
 
-    def extend(self, from_node, to_node, sample_dist):
+    def extend(self, from_node, to_node):
         R, theta = self.calc_distance_and_angle(from_node, to_node)
-        if sample_dist < R:
-            R = sample_dist
+        if self.sample_dist < R:
+            R = self.sample_dist
             new_node = Node(from_node.x + R * np.cos(theta), from_node.y + R * np.sin(theta))
         else:
-            new_node = to_node
+            new_node = Node(to_node.x, to_node.y)
         
         new_node.cost = R + from_node.cost
         return new_node

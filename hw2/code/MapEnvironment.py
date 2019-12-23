@@ -7,7 +7,7 @@ from RRTPlanner import RRTPlanner
 
 class MapEnvironment(object):
     
-    def __init__(self, mapfile, start, goal, map_resolution = 0.5):
+    def __init__(self, mapfile, start, goal, map_resolution = 2):
 
         # Obtain the boundary limits.
         # Check if file exists.
@@ -102,6 +102,7 @@ class MapEnvironment(object):
             plt.xlabel(title, fontsize=12)
         if filename is not None:
             plt.savefig('{}.png'.format(filename))
+        #plt.show()
         plt.close()
 
     def calc_plan_cost(self, plan):
