@@ -172,6 +172,9 @@ class RRTPlanner(object):
 
     def ShortenPath(self, path):
         # TODO (student): Postprocessing of the plan.
+        if path == []:
+            return path
+        
         start = 0
         while start < len(path):
             start_idx, start_node = path[start]

@@ -12,11 +12,9 @@ from IPython import embed
 def main(planning_env, planner, start, goal, planner_name, sample_dist, extra_text='',):
 
     # Notify.
-    input('Press any key to begin planning')
-
     # Plan.
     start_time = time.time()
-    plan = planner.Plan(start, goal, sample_dist=sample_dist)
+    plan = planner.Plan(start, goal, sample_dist=sample_dist, max_iter=2000)
 
     # Shortcut the path.
     # TODO (student): Do not shortcut when comparing the performance of algorithms. 
@@ -31,7 +29,6 @@ def main(planning_env, planner, start, goal, planner_name, sample_dist, extra_te
     title =  'planner: {}, cost: {}, exec_time: {}'.format(planner_name, cost, exec_time)
     filename = '{}_{}_{}_{}_{}'.format(extra_text, planner_name, int(cost), int(end_time - start_time), int(time.time()))
     planning_env.visualize_plan(plan_short, filename=filename, title=title)
-    embed()
 
 
 if __name__ == "__main__":
@@ -48,13 +45,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # First setup the environment and the robot.
-    planning_env = MapEnvironment(args.map, args.start, args.goal)
-    for prob in [0.05, 0.2]:
+    for p in [0.2]:
         for i in range(5):
+            planning_env = MapEnvironment(args.map, args.start, args.goal)
             planner = RRTPlanner(planning_env, goal_sample_rate=p)
             main(planning_env, planner, args.start, args.goal, args.planner, sample_dist=10, extra_text='exp1_p{}_i{}'.format(p, i))
 
-    for j, dist in enumerate([4, 16, 64, 128, float('inf')]):
-        for i in range(3):
-            planner = RRTPlanner(planning_env, goal_sample_rate=0.2)
-            main(planning_env, planner, args.start, args.goal, args.planner, sample_dist=dist, extra_text='exp2_j{}_i{}'.format(j, i))
+    if False:
+        for j, dist in enumerate([4, 16, 64, 128, float('inf')]):
+            for i in range(3):
+                planner = RRTPlanner(planning_env, goal_sample_rate=0.2)
+                main(planning_env, planner, args.start, args.goal, args.planner, sample_dist=dist, extra_text='exp2_j{}_i{}'.format(j, i))

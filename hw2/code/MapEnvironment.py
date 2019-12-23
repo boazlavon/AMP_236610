@@ -92,16 +92,17 @@ class MapEnvironment(object):
         plt.imshow(self.map, interpolation='nearest')
         plt.plot(self.start[1], self.start[0], "oc")
         plt.plot(self.goal[1], self.goal[0], "oc")
-        for (c_cord, n_cord) in zip(plan, plan[1:]):
-            dx = (c_cord[0], n_cord[0])
-            dy = (c_cord[1], n_cord[1])
-            plt.plot(dy, dx, 'g')
+        if plan:
+            for (c_cord, n_cord) in zip(plan, plan[1:]):
+                dx = (c_cord[0], n_cord[0])
+                dy = (c_cord[1], n_cord[1])
+                plt.plot(dy, dx, 'g')
 
         if title is not None:
             plt.xlabel(title, fontsize=12)
         if filename is not None:
             plt.savefig('{}.png'.format(filename))
-        plt.show()
+        plt.close()
 
     def calc_plan_cost(self, plan):
         cost = 0
