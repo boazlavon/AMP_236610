@@ -46,6 +46,6 @@ if __name__ == "__main__":
 
     for j, k in enumerate([2,4]):
         for i in range(2):
-            planning_env = MapEnvironment(args.map, args.start, args.goal, map_resolution=2)
+            planning_env = MapEnvironment(args.map, args.start, args.goal, map_resolution=1)
             planner = RRTStarPlanner(planning_env, goal_sample_rate=0.2, k=k)
             main(planning_env, planner, args.start, args.goal, args.planner, extra_text='exp3_j{}_k{}'.format(j, k))

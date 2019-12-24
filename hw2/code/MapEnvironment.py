@@ -7,7 +7,7 @@ from RRTPlanner import RRTPlanner
 
 class MapEnvironment(object):
     
-    def __init__(self, mapfile, start, goal, map_resolution = 2):
+    def __init__(self, mapfile, start, goal, map_resolution = 1):
 
         # Obtain the boundary limits.
         # Check if file exists.

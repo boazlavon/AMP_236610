@@ -4,9 +4,10 @@ from RRTPlanner import RRTPlanner, Node
 
 class RRTStarPlanner(RRTPlanner):
 
-    def __init__(self, planning_env, goal_sample_rate=0.2, sample_dist = 20, k = 2):
+    def __init__(self, planning_env, goal_sample_rate=0.2, sample_dist = 30, k = 2, finish_on_goal=True):
         super().__init__(planning_env, goal_sample_rate, sample_dist)
         self.k = k     
+        self.finish_on_goal = finish_on_goal
 
     def Plan(self, start_config, goal_config, max_iter = 1000):
         
@@ -33,27 +34,43 @@ class RRTStarPlanner(RRTPlanner):
                 result = self.choose_parent(new_node, knnIDs)
                 if result is not None:
                     new_node, parent_idx = result
-                    new_node_idx = self.tree.AddVertex(new_node)
-                    self.tree.AddEdge(parent_idx, new_node_idx)
                     parent_node  = self.tree.vertices[parent_idx]
-                    new_node.parent = parent_node
-                    self.rewire(new_node_idx, knnIDs)
+                    if self.planning_env.edge_validity_checker(new_node, parent_node):
+                        new_node_idx = self.tree.AddVertex(new_node)
+                        self.tree.AddEdge(parent_idx, new_node_idx)
+                        new_node.parent = parent_node
+                        self.rewire(new_node_idx, knnIDs)
 
             print(i)
             if (i % 2) == 0:
                 self.draw_graph(new_node)
+                i = i
             i += 1
 
-            if new_node:  # check reaching the goal
+            if new_node and self.finish_on_goal:  # check reaching the goal
                 result = self.search_best_goal_node(goal_node)
                 if result is not None:
                     last_node_idx, goal_dist = result
+                    last_node = self.tree.vertices[last_node_idx]
+                    if self.planning_env.edge_validity_checker(last_node, goal_node):
+                        goal_idx = self.tree.AddVertex(goal_node)
+                        self.tree.AddEdge(last_node_idx, goal_idx)
+                        goal_node.cost = self.tree.vertices[last_node_idx].cost + goal_dist
+                        plan = self.extract_plan(start_idx, goal_idx)
+                        self.draw_graph()
+                        break
+
+        if not self.finish_on_goal:
+            result = self.search_best_goal_node(goal_node)
+            if result is not None:
+                last_node_idx, goal_dist = result
+                last_node = self.tree.vertices[last_node_idx]
+                if self.planning_env.edge_validity_checker(last_node, goal_node):
                     goal_idx = self.tree.AddVertex(goal_node)
                     self.tree.AddEdge(last_node_idx, goal_idx)
                     goal_node.cost = self.tree.vertices[last_node_idx].cost + goal_dist
                     plan = self.extract_plan(start_idx, goal_idx)
                     self.draw_graph()
-                    break
 
         return plan
 
@@ -65,16 +82,15 @@ class RRTStarPlanner(RRTPlanner):
         extended = []
         for near_node_idx in knnIDs:
             near_node = self.tree.vertices[near_node_idx]
-            if self.planning_env.edge_validity_checker(near_node, new_node): 
-                extended.append((self.extend(near_node, new_node), near_node_idx))
-            else:
-                extended.append((Node(0, 0, cost=float('inf')), 0))  # the cost of collision node
+            if self.planning_env.edge_validity_checker(near_node, new_node):
+                t_node = self.extend(near_node, new_node)
+                if ((t_node.x == new_node.x) and (t_node.y == new_node.y)):
+                    extended.append((t_node, near_node_idx))
 
-        min_node, parent_idx = min(extended, key= lambda node_t : node_t[0].cost)
-        if min_node.cost == float("inf"):
-            print("There is no good path.(min_cost is inf)")
+        if not extended:
             return None
 
+        min_node, parent_idx = min(extended, key= lambda node_t : node_t[0].cost)
         return (min_node, parent_idx)
 
     def calc_new_cost(self, from_node, to_node):
