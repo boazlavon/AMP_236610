@@ -1,22 +1,25 @@
 import numpy as np
+import time
 from RRTTree import RRTTree
 from RRTPlanner import RRTPlanner, Node
 
 class RRTStarPlanner(RRTPlanner):
 
-    def __init__(self, planning_env, goal_sample_rate=0.2, sample_dist = 10, k = None):
-        super().__init__(planning_env, goal_sample_rate, sample_dist)
+    def __init__(self, planning_env, goal_bias=0.2, step_size = 10, k = None):
+        super().__init__(planning_env, goal_bias, step_size)
         self.k = k     
 
-    def Plan(self, start_config, goal_config, max_iter = 3000):
+    def Plan(self, start_config, goal_config, max_iter = 3000, use_cost_times=False):
         
         plan = []
         start_node = Node(*start_config)
         goal_node  = Node(*goal_config)
         goal_idx = None
         min_cost = float('inf')
+        
         plot_plan = None
         title = 'cost = inf'
+        cost_times = []
 
         # Start with adding the start configuration to the tree.
         start_idx = self.tree.AddVertex(start_node)
@@ -50,18 +53,22 @@ class RRTStarPlanner(RRTPlanner):
             if (i % 3) == 0:
                 self.planning_env.draw_graph(rnd_node=new_node, tree=self.tree, plan=plot_plan, title=title)
                     
-            if (i % 20) == 0:
-                if goal_idx is not None:
+            if goal_idx is not None:
+                cost = self.tree.vertices[goal_idx].cost
+                if cost < min_cost:
+                    min_cost = cost
                     plan = self.extract_plan(start_idx, goal_idx)
-                    cost = self.tree.vertices[goal_idx].cost
-                    if cost < min_cost:
-                        min_cost = cost
-                        title = 'cost = {}'.format(min_cost)
-                        plot_plan = [self.tree.vertices[node_idx].p for node_idx in plan]
+                    cost_times.append((time.time(), min_cost))
+                    title = 'cost = {}'.format(min_cost)
+                    plot_plan = [self.tree.vertices[node_idx].p for node_idx in plan]
             i += 1
 
         if goal_idx is not None:
             plan = self.extract_plan(start_idx, goal_idx)
+            cost_times.append((time.time(), self.tree.vertices[goal_idx].cost))
+
+        if use_cost_times:
+            return (plan, cost_times)
 
         return plan
 

@@ -23,11 +23,11 @@ class Node(object):
 
 class RRTPlanner(object):
 
-    def __init__(self, planning_env, goal_sample_rate=0.2, sample_dist = 10):
+    def __init__(self, planning_env, goal_bias=0.2, step_size = 10):
         self.planning_env = planning_env
         self.tree = RRTTree(self.planning_env)
-        self.goal_sample_rate = goal_sample_rate
-        self.sample_dist = sample_dist
+        self.goal_bias = goal_bias
+        self.step_size = step_size
 
 
     def Plan(self, start_config, goal_config, max_iter = 1000):
@@ -85,17 +85,17 @@ class RRTPlanner(object):
 
         delta = to_node - from_node
         norm  = self.planning_env.compute_distance(from_node, to_node)
-        if norm > self.sample_dist:
+        if norm > self.step_size:
             delta = delta / norm
-            delta = delta * self.sample_dist
+            delta = delta * self.step_size
         
         new_node = from_node + delta
         new_node = Node(*new_node)
-        new_node.cost = min(norm, self.sample_dist) + from_node_cost
+        new_node.cost = min(norm, self.step_size) + from_node_cost
         return new_node
 
     def get_random_node(self):
-        if np.random.rand() > self.goal_sample_rate:
+        if np.random.rand() > self.goal_bias:
             rnd = Node(np.random.random_integers(*self.planning_env.xlimit),
                        np.random.random_integers(*self.planning_env.ylimit))
         else:  # goal point sampling

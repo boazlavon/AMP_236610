@@ -127,15 +127,15 @@ class MapEnvironment(object):
         '''
         plt.clf()
         plt.imshow(self.map, interpolation='nearest')
-        if rnd_node is not None:
-            plt.plot(rnd_node.y, rnd_node.x, "or")
-
         if tree is not None:
             for node_idx, node in enumerate(tree.vertices):
                 if node_idx in tree.edges:
                     dx = [node.x, tree.vertices[tree.edges[node_idx]].x ]
                     dy = [node.y, tree.vertices[tree.edges[node_idx]].y ]
                     plt.plot(dy, dx, 'b')
+
+        if rnd_node is not None:
+            plt.plot(rnd_node.y, rnd_node.x, "or")
 
         if plan is not None:
             plt.plot(self.start[1], self.start[0], "oc")
@@ -159,3 +159,6 @@ class MapEnvironment(object):
 
         if close:
             plt.close()
+
+    def calc_cost(self, plan):
+        return sum([self.compute_distance(cur_p, next_p) for (cur_p, next_p) in zip(plan, plan[1:])])
