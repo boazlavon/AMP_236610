@@ -21,13 +21,10 @@ class RRTTree(object):
         @param config Sampled configuration.
         '''
         dists = []
-        config = (config.x, config.y)
         for v in self.vertices:
-            v = (v.x, v.y)
-            dists.append(self.planning_env.compute_distance(config, v))
+            dists.append(self.planning_env.compute_distance(config.p, v.p))
 
         vid, vdist = min(enumerate(dists), key=operator.itemgetter(1))
-
         return vid, self.vertices[vid]
             
     def GetKNN(self, config, k):
@@ -37,12 +34,10 @@ class RRTTree(object):
         @param k Number of nearest neighbors to retrieve.
         '''
         dists = []
-        config = (config.x, config.y)
         for v in self.vertices:
-            v = (v.x, v.y)
-            dists.append(self.planning_env.compute_distance(config, v))
+            dists.append(self.planning_env.compute_distance(config.p, v.p))
 
-        dists = numpy.array(dists)
+        dists  = numpy.array(dists)
         knnIDs = numpy.argpartition(dists, k)
         knnDists = [dists[i] for i in knnIDs]
 
@@ -58,10 +53,10 @@ class RRTTree(object):
         self.vertices.append(config)
         return vid
 
-    def AddEdge(self, sid, eid):
+    def AddEdge(self, parent_idx, child_idx):
         '''
         Adds an edge in the tree.
         @param sid start state ID
         @param eid end state ID
         '''
-        self.edges[eid] = sid
+        self.edges[child_idx] = parent_idx

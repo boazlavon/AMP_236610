@@ -11,9 +11,6 @@ from IPython import embed
 
 def main(planning_env, planner, start, goal, planner_name):
 
-    # Notify.
-    input('Press any key to begin planning')
-
     # Plan.
     start_time = time.time()
     plan = planner.Plan(start, goal)
@@ -21,16 +18,19 @@ def main(planning_env, planner, start, goal, planner_name):
     # Shortcut the path.
     # TODO (student): Do not shortcut when comparing the performance of algorithms. 
     # Comment this line out when collecting data over performance metrics.
-    plan_short = planner.ShortenPath(plan)
-    end_time   = time.time()
+    plan = planner.ShortenPath(plan)
+    end_time = time.time()
 
     # Visualize the final path.
-    plan_short = [(node.x, node.y) for _, node in plan_short]
-    cost  = planning_env.calc_plan_cost(plan_short)
+    cost = 'inf'
+    if plan:
+        cost = planner.tree.vertices[plan[-1]].cost
     exec_time = time.strftime('%M:%S', time.gmtime(end_time - start_time))
     title =  'planner: {}, cost: {}, exec_time: {}'.format(planner_name, cost, exec_time)
-    filename = '{}_{}_{}_{}'.format(planner_name, int(cost), int(end_time - start_time), int(time.time()))
-    planning_env.visualize_plan(plan_short, filename=filename, title=title)
+    filename = '{}_{}_{}_{}'.format(planner_name, cost, int(end_time - start_time), int(time.time()))
+    plan = [planner.tree.vertices[node_idx].p for node_idx in plan]
+    
+    planning_env.draw_graph(tree=planner.tree, plan=plan, filename=filename, title=title, show=True)
     embed()
 
 
