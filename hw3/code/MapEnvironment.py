@@ -95,6 +95,8 @@ class MapEnvironment(object):
         '''
         plt.clf()
         plt.imshow(self.map, interpolation='nearest')
+        plt.plot(self.start[1], self.start[0], 'o', color='r')
+        plt.plot(self.goal[1], self.goal[0], 'o', color='g')
         if bp is not None:
             for config in bp:
                 if bp[config] is not None:

@@ -5,14 +5,11 @@ import argparse
 from AStarPlanner import AStarPlanner
 from IPython import embed
 from MapEnvironment import MapEnvironment
-from MultiHeuristicPlannerSolution import MultiHeuristicPlanner
+from MultiHeuristicPlanner import MultiHeuristicPlanner
 
 
 def main(planning_env, planner, start, goal):
     # Notify.
-    input('Press any key to begin planning')
-    planning_env.visualize_env()
-
     # Plan.
     plan = planner.Plan(start, goal)
 

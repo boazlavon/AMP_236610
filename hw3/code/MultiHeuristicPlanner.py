@@ -114,7 +114,7 @@ class MultiHeuristicPlanner(object):
 
     def remove_state(self, s):
         for i, _ in enumerate(self.OPEN):
-            new_openi = ()
+            new_openi = q.PriorityQueue()
             while not self.OPEN[i].empty():
                 key, state = self.OPEN[i].get()
                 if state.p == s.p:
@@ -198,7 +198,7 @@ class MultiHeuristicPlanner(object):
 
         self.OPEN = [q.PriorityQueue()]
         for _ in self.guidance:
-            self.OPEN.append(p.PriorityQueue())
+            self.OPEN.append(q.PriorityQueue())
 
         kwargs = {'config' : start_node.p}
         key = start_node.key(self.g, self.H[0], self.w1, **kwargs)
@@ -215,7 +215,7 @@ class MultiHeuristicPlanner(object):
         iter_count = 0
         while True:
             if self.OPEN[0].empty():
-                return self.extract_plan()
+                return self.extract_plan(goal_config)
 
             min_key0, min_node0 = self.OPEN[0].get() # take min and push back
             self.OPEN[0].put((min_key0, min_node0))
@@ -236,7 +236,7 @@ class MultiHeuristicPlanner(object):
                     print(min_keyi, min_key0, self.w2*min_key0)
                     if self.g[goal_config] <= min_keyi:
                         if self.g[goal_config] < float('inf'):
-                            return self.extract_plan() 
+                            return self.extract_plan(goal_config) 
                     else:
                         s = min_nodei
                         self.expand_state(s)
@@ -246,7 +246,7 @@ class MultiHeuristicPlanner(object):
                     choice = 'open0'
                     if self.g[goal_config] <= min_key0:
                         if self.g[goal_config] < float('inf'):
-                            return self.extract_plan()
+                            return self.extract_plan(goal_config)
                     else:
                         s = min_node0
                         self.expand_state(s)
