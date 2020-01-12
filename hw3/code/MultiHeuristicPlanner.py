@@ -88,7 +88,7 @@ class Node(object):
 
 
 class MultiHeuristicPlanner(object):
-    def __init__(self, planning_env, guidance, w1=20, w2=1.35):
+    def __init__(self, planning_env, guidance, w1=20, w2=1.5):
         """
 
         :param planning_env: The planning environment for the algorithm
@@ -233,7 +233,6 @@ class MultiHeuristicPlanner(object):
 
                 if (not is_empty) and min_keyi <= self.w2 * min_key0:
                     choice = 'open1'
-                    print(min_keyi, min_key0, self.w2*min_key0)
                     if self.g[goal_config] <= min_keyi:
                         if self.g[goal_config] < float('inf'):
                             return self.extract_plan(goal_config) 
