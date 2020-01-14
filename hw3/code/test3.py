@@ -8,19 +8,20 @@ from MapEnvironment import MapEnvironment
 from MultiHeuristicPlanner import MultiHeuristicPlanner
 
 
-def main(planning_env, planner, start, goal):
+def main(planning_env, planner, start, goal, w1, w2, mp):
     # Notify.
     # Plan.
     plan = planner.Plan(start, goal)
     nodes_count = len(planner.g)
     cost        = planner.g[tuple(goal)]
-    planner_name = 'MHA'
-    title =  'planner: {}, cost: {}, nodes_count: {}'.format(planner_name, cost, nodes_count)
-    filename = '{}_{}_{}'.format(planner_name, cost, nodes_count)
+    if cost == float('inf'):
+        cost = 'inf'
+    planner_name = 'MHA_test1_{}'.format(mp)
+    title =  'w1 = {}, w2 = {}, cost: {}, nodes_count: {}'.format(w1, w2, cost, nodes_count)
+    filename = '{}_{}_{}_w1_{}_w2_{}'.format(planner_name, cost, nodes_count, w1, w2)
 
     # Visualize the final path.
-    planning_env.draw_graph(bp=planner.bp, plan=plan, filename=filename, title=title, show=True)
-    exit(0)
+    planning_env.draw_graph(bp=planner.bp, plan=plan, filename=filename, title=title, show=False, close=True)
 	
 
 if __name__ == "__main__":
@@ -41,15 +42,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # First setup the environment and the robot.
-    planning_env = MapEnvironment(args.map, args.start, args.goal)
-
+    
     # Next setup the planner
-    if args.planner == 'astar':
-        planner = AStarPlanner(planning_env)
-    elif args.planner == 'mhastar':
-        planner = MultiHeuristicPlanner(planning_env, list(zip(args.userGuidance[::2], args.userGuidance[1::2])))
-    else:
-        print('Unknown planner option: %s' % args.planner)
-        exit(0)
-
-    main(planning_env, planner, args.start, args.goal)
+    W1 = (1,)
+    W2 = (1,)
+    for w1 in W1:
+        for w2 in W2:
+            print('w1={} W2={}'.format(w2, w2))
+            planning_env = MapEnvironment(args.map, args.start, args.goal)
+            planner = MultiHeuristicPlanner(planning_env, list(zip(args.userGuidance[::2], args.userGuidance[1::2])), w1, w2)
+            main(planning_env, planner, args.start, args.goal, w1, w2, args.map)

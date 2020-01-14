@@ -1,61 +1,19 @@
 import queue as q
-from heapq import heappush, heappop
-import itertools
-
 import numpy as np
 from matplotlib import pyplot as plt
 
-class PQueue(object):
-    REMOVED = '<removed-task>'      # placeholder for a removed task
-
-    def __init__(self):
-        self.pq = []                         # list of entries arranged in a heap
-        self.entry_finder = {}               # mapping of tasks to entries
-        self.counter = itertools.count()     # unique sequence count
-        self.count = 0
-
-    def add_task(self, task, priority=0):
-        'Add a new task or update the priority of an existing task'
-        if task in self.entry_finder:
-            remove_task(task)
-        count = next(self.counter)
-        entry = [priority, count, task]
-        self.entry_finder[task] = entry
-        heappush(self.pq, entry)
-        self.counter += 1
-
-    def remove_task(self, task):
-        'Mark an existing task as REMOVED.  Raise KeyError if not found.'
-        entry = entry_finder.pop(task)
-        entry[-1] = PQueue.REMOVED
-        self.counter -= 1
-
-    def pop_task(self):
-        'Remove and return the lowest priority task. Raise KeyError if empty.'
-        while self.pq:
-            priority, count, task = heappop(pq)
-            if task is not PQueue.REMOVED:
-                self.counter -= 1
-                del self.entry_finder[task]
-                return task
-        raise KeyError('pop from an empty priority queue')
-
-    def isEmpty(self):
-        return (self.counter == 0)
 
 class Node(object):
 
-        HAS_GENERATED = set()
         """
         RRT Node
         """
-        def __init__(self, x, y, cost=0, is_ancestor_cache={}):
+        def __init__(self, x, y, is_ancestor_cache={}):
             self.x = x
             self.y = y
             #self.cost = cost # g
             self.is_ancestor_cache = {}
             self.is_ancestor_cache.update(is_ancestor_cache)
-            Node.HAS_GENERATED.add((x, y))
 
         @property
         def p(self):
@@ -98,7 +56,6 @@ class MultiHeuristicPlanner(object):
         """
         self.guidance = guidance
         self.planning_env = planning_env
-        self.nodes = dict()
 
         hi = [self.planning_env.build_user_guided_heuristic(g_config) \
                 for g_config in guidance]
@@ -213,7 +170,8 @@ class MultiHeuristicPlanner(object):
             open_i.put((key, start_node))
 
         iter_count = 0
-        while True:
+        MAX_ITER   = 500000
+        while iter_count < MAX_ITER:
             if self.OPEN[0].empty():
                 return self.extract_plan(goal_config)
 
@@ -252,6 +210,8 @@ class MultiHeuristicPlanner(object):
                         self.CLOSED_anchor.append(s.p)
 
                 print(iter_count, s, choice, self.OPEN[0].qsize(), self.OPEN[1].qsize())
-                if (iter_count % 3) == 0:
-                    self.planning_env.draw_graph(bp=self.bp)
+                #if (iter_count % 500) == 0:
+                #    self.planning_env.draw_graph(bp=self.bp)
                 iter_count += 1
+
+        return [] 
