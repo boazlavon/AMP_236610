@@ -168,6 +168,13 @@ def build_graphs(experiments, robot):
                 build_graph(experiments, x_axis, y_axis, in_f=in_f, in_eps=in_eps, in_p=in_p, output_dir=output_dir, robot=robot)
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--graphs',    dest='graphs', action='store_true')
+    parser.add_argument('--no-graphs', dest='graphs', action='store_false')
+    parser.set_defaults(graphs=True)
+    args = parser.parse_args()
+    do_build_graph = args.graphs
+
     for robot in ALL_ROBOTS:
         print('=============================================')
         experiments = load_results(robot, EXEC_NAME)
@@ -190,7 +197,8 @@ def main():
 
         print()
         print('Build Graphs')
-        build_graphs(experiments, robot)
+        if do_build_graph:
+            build_graphs(experiments, robot)
         print('=============================================')
         
 if __name__ == '__main__':
