@@ -114,10 +114,6 @@ def build_graph(experiments, x_axis, y_axis, in_f=None, in_eps=None, in_p=None, 
     if in_p is not None:
         title += f'p={in_p}'
 
-    in_f   = 'iter'   if in_f   is None else in_f
-    in_p   = 'iter'   if in_p   is None else in_p
-    in_eps = 'iter'   if in_eps is None else in_eps
-
     plt.xlabel(AXIS_LABELS[x_axis])
     plt.ylabel(AXIS_LABELS[y_axis])
     plt.title(title)
@@ -139,7 +135,10 @@ def build_graph(experiments, x_axis, y_axis, in_f=None, in_eps=None, in_p=None, 
         plt.ylim([0, y_max])
         plt.yticks(yticks)
 
-    filename = f'{robot} f_{in_f}eps_{in_p}p_{in_eps}_x{FNAME_LABELS[x_axis]}_y{FNAME_LABELS[y_axis]}.png'
+    in_f   = 'iter'   if in_f   is None else in_f
+    in_p   = 'iter'   if in_p   is None else in_p
+    in_eps = 'iter'   if in_eps is None else in_eps
+    filename = f'{robot} f_{in_f}eps_{in_eps}p_{in_p}_x{FNAME_LABELS[x_axis]}_y{FNAME_LABELS[y_axis]}.png'
     if output_dir is not None:
         filename = os.path.join(output_dir, filename)
     plt.savefig(filename)
@@ -150,7 +149,7 @@ def mask_tuple(in_tuple, mask):
     output_tuple = list(in_tuple)
     for flag in ITER_BIT_FLAGS.keys():
         if flag & mask:
-            output_tuple[int(math.log(flag,2))] = None
+            output_tuple[2 - int(math.log(flag,2))] = None
     return tuple(output_tuple)
 
 def build_graphs(experiments, robot):
